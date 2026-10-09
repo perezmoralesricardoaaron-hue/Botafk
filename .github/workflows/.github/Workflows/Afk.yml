@@ -1,0 +1,120 @@
+Nombre del primer archivo: bot.js
+Código del primer archivo:
+
+
+
+
+
+
+
+const mineflayer = require('mineflayer');
+
+función createBot() {
+    const bot = mineflayer.createBot({
+        host: 'brawl.stars.bodrio', // <--- REEMPLAZA ESTO POR LA IP DE TU SERVER
+        puerto: 67676, // Puerto predeterminado de Minecraft
+        nombre de usuario: 'Raboot_356', // Nombre genérico del bot/NPC dentro del juego
+        version: false // Autodetecta la versión exacta del servidor (1.8 a 1.21+)
+    });
+
+    bot.on('spawn', () => {
+        console.log(`[NPC] El bot ha aparecido correctamente en el mapa.`);
+        // Si tu servidor No-Premium requiere contraseña, descomenta la línea de abajo:
+        // setTimeout(() => bot.chat('/login erickJKN'), 4000);
+    });
+
+    bot.on('login', () => {
+        console.log(`[NPC] Conexión establecida con el servidor de Minecraft.`);
+    });
+
+    // Rutina automatizada del NPC: Buscar cofre, interactuar, cerrar y saltar (Cada 45 segundos)
+    setInterval(async () => {
+        si (!bot || !bot.entity) regresar;
+
+        intentar {
+            // 1. Localizar el bloque de cofre en una radio de 5 bloques
+            const chestBlock = bot.findBlock({
+                Coincidencia: bot.registro.blocksByName.chest.id,
+                distancia máxima: 5
+            });
+
+            si (bloqueo de pecho) {
+                console.log('[NPC] Interactuando con el contenedor cercano...');
+                
+                // 2. Abrir el contenedor (genera la animación y sonido físico en el servidor)
+                const cofre = await bot.openChest(chestBlock);
+                console.log('[NPC] Contenedor abierto.');
+                
+                // Mantener la interfaz abierta durante 2 segundos simulando actividad de inventario
+                esperar nueva promesa(resolver => establecerTiempoDeEspera(resolver, 2000));
+                
+                // 3. Cerrar la interfaz del contenedor
+                cofre.cerrar();
+                console.log('[NPC] Contenedor cerrado.');
+            } demás {
+                console.log('[NPC] Aviso: No se detectó ningún contenedor válido cerca.');
+            }
+
+            // 4. Ejecutar acción de salto físico para evitar la inactividad (Anti-AFK)
+            esperar nueva promesa(resolver => establecerTiempoDeEspera(resolver, 1000));
+            bot.setControlState('jump', true);
+            setTimeout(() => bot.setControlState('jump', false), 500);
+            console.log('[NPC] Acción anti-inactividad completada con éxito.');
+
+        } capturar (error) {
+            console.log(`[NPC] Error en el ciclo de ejecución: ${err.message}`);
+        }
+    }, 45000);
+
+    // Sistema de autorreconexión segura tras expulsiones o reinicios del servidor
+    bot.on('end', (reason) => {
+        console.log(`[NPC] Conexión finalizada por: ${reason}. Reintentando en 25 segundos...`);
+        setTimeout(createBot, 25000);
+    });
+
+    bot.on('error', (err) => console.log(`[NPC] Error crítico de red detectado: ${err}`));
+}
+
+crearBot();
+
+
+
+
+
+
+
+
+
+
+NOMBRE DEL SEGUNDO ARCHIVO: .github/workflows/afk.yml
+CÃ“DIGO DEL SEGUNDO ARCHIVO:
+
+
+
+
+
+
+Nombre: Bot NPC de Minecraft 24/7
+
+en:
+  empujar:
+    ramas: [ principal ]
+  flowwork_dispatch: # Permite encender el NPC de forma manual desde el panel web
+
+empleos:
+  bot de ejecución:
+    runs-on: ubuntu-latest
+    pasos:
+    - nombre: Clonar repositorio
+      Usos: acciones/checkout@v4
+
+    - nombre: Configurar Node.js
+      usos: actions/setup-node@v4
+      con:
+        versión del nodo: 18
+
+    - nombre: Instalar dependencias de Mineflayer
+      ejecutar: npm install mineflayer
+
+    - nombre: Ejecutar script del NPC
+      ejecutar: node bot.js
